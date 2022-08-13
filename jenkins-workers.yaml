@@ -3,19 +3,18 @@ kind: StatefulSet
 metadata:
   labels:
     app.k8s.io/component: agent
-    app.k8s.io/instance: prod
+    app.k8s.io/instance: ytl
     app.k8s.io/name: agent-ldfc
     app.k8s.io/part-of: jenkins
     app.k8s.io/version: 1.0.0
-  name: usdf-agent-ldfc
+  name: usdf-agent-ldfc-ytl
 spec:
   podManagementPolicy: Parallel
-  replicas: 2
-  revisionHistoryLimit: 10
+  replicas: 1 
   selector:
     matchLabels:
       app.k8s.io/component: agent
-      app.k8s.io/instance: prod
+      app.k8s.io/instance: ytl
       app.k8s.io/name: agent-ldfc
       app.k8s.io/part-of: jenkins
       app.k8s.io/version: 1.0.0
@@ -24,12 +23,16 @@ spec:
     metadata:
       labels:
         app.k8s.io/component: agent
-        app.k8s.io/instance: prod
+        app.k8s.io/instance: ytl
         app.k8s.io/name: agent-ldfc
         app.k8s.io/part-of: jenkins
         app.k8s.io/version: 1.0.0
     spec:
       containers:
+      - name: curl
+        image: curlimages/curl
+        command: ["/bin/sleep", "3650d"]
+        imagePullPolicy: IfNotPresent
       - args:
         - --host=tcp://localhost:2375
         - --mtu=1376
@@ -68,10 +71,10 @@ spec:
         resources:
           limits:
             cpu: "8"
-            memory: 64Gi
+            memory: 32Gi
           requests:
             cpu: "8"
-            memory: 64Gi
+            memory: 32Gi
         securityContext:
           allowPrivilegeEscalation: true
           privileged: true
@@ -123,18 +126,21 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
       - env:
-        - name: HTTP_PROXY
-          value: http://sdfproxy.sdf.slac.stanford.edu:3128
-        - name: HTTPS_PROXY
-          value: http://sdfproxy.sdf.slac.stanford.edu:3128
-        - name: http_proxy
-          value: http://sdfproxy.sdf.slac.stanford.edu:3128
-        - name: https_proxy
-          value: http://sdfproxy.sdf.slac.stanford.edu:3128
+#        - name: HTTP_PROXY
+#          value: http://sdfproxy.sdf.slac.stanford.edu:3128
+#        - name: HTTPS_PROXY
+#          value: http://sdfproxy.sdf.slac.stanford.edu:3128
+#        - name: http_proxy
+#          value: http://sdfproxy.sdf.slac.stanford.edu:3128
+#        - name: https_proxy
+#          value: http://sdfproxy.sdf.slac.stanford.edu:3128
         - name: JAVA_ARGS
-          value: "-javaagent:/usr/share/jenkins/jmx_prometheus_javaagent-0.11.0.jar=localhost:8080:/usr/share/jenkins/jmx_exporter.yaml -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.proxyPort=3128 -Dhttp.nonProxyHosts=.slac.stanford.edu"
-        - name: NO_PROXY
-          value: "*.slac.stanford.edu"
+          value: "-javaagent:/usr/share/jenkins/jmx_prometheus_javaagent-0.11.0.jar=localhost:8080:/usr/share/jenkins/jmx_exporter.yaml"
+# -Dhttp.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttps.proxyHost=sdfproxy.sdf.slac.stanford.edu -Dhttp.proxyPort=3128 -Dhttps.proxyPort=3128 -Dhttp.nonProxyHosts=127.0.0.0/8,192.168.0.0/16,10.0.0.0/8,.slac.stanford.edu"
+#        - name: NO_PROXY
+#          value: "127.0.0.1,localhost,127.0.0.0/8,192.168.0.0/16,10.0.0.0/8,.slac.stanford.edu"
+#        - name: no_proxy
+#          value: "127.0.0.1,localhost,127.0.0.0/8,192.168.0.0/16,10.0.0.0/8,.slac.stanford.edu"
         - name: DOCKER_HOST
           value: tcp://localhost:2375
         - name: JSWARM_MASTER_URL
@@ -253,26 +259,11 @@ spec:
               resource: limits.memory
         image: lsstsqre/jenkins-swarm-client:3.15-ldfc
         imagePullPolicy: Always
-        livenessProbe:
-          exec:
-            command:
-            - wget
-            - --spider
-            - -q
-            - http://127.0.0.1:8080/metrics
-          failureThreshold: 2
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          successThreshold: 1
-          timeoutSeconds: 1
         name: swarm
+        #command: ["/bin/sh", "-ec", "while :; do echo '.'; sleep 60 ; done"]
         readinessProbe:
           exec:
-            command:
-            - wget
-            - --spider
-            - -q
-            - http://127.0.0.1:8080/metrics
+            command: [ 'wget', '-Y', 'off', '--spider', '-q', 'http://127.0.0.1:8080/metrics' ]
           failureThreshold: 2
           initialDelaySeconds: 5
           periodSeconds: 5

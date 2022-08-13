@@ -1,0 +1,12 @@
+namespace: rubin-jenkins-workers
+
+resources:
+- ns.yaml
+- jenkins-workers.yaml
+- istio-egress.yaml
+
+secretGenerator:
+- name: agent-ldfc
+  files:
+  - etc/.secrets/JSWARM_PASSWORD
+  - etc/.secrets/JSWARM_USERNAME
