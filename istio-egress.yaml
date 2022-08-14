@@ -4,10 +4,20 @@ metadata:
   name: rubin-jekins-workers
 spec:
   hosts:
+  # copy level
   - ci.lsst.codes
   - eups.lsst.codes
+  # docker
+  - github.com
   - docker.io
   - www.docker.com
+  # anaconda builds
+  - anaconda.org
+  - binstar-cio-packages-prod.s3.amazonaws.com
+  # astropi
+  - datacenter.iers.org
+  - maia.usno.navy.mil
+  - hpiers.obspm.fr
   ports:
   - number: 443
     name: tls
@@ -103,6 +113,14 @@ spec:
     - gateways:
       - istio-egressgateway
       sniHosts:
+      - github.com
+    route:
+    - destination:
+        host: github.com
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
       - docker.io
     route:
     - destination:
@@ -115,6 +133,46 @@ spec:
     route:
     - destination:
         host: www.docker.com
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - anaconda.org
+    route:
+    - destination:
+        host: anaconda.org
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - binstar-cio-packages-prod.s3.amazonaws.com
+    route:
+    - destination:
+        host: binstar-cio-packages-prod.s3.amazonaws.com
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - datacenter.iers.org
+    route:
+    - destination:
+        host: datacenter.iers.org
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - maia.usno.navy.mil
+    route:
+    - destination:
+        host: maia.usno.navy.mil
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - hpiers.obspm.fr
+    route:
+    - destination:
+        host: hpiers.obspm.fr
 
   tcp:
   - match:
