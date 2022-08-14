@@ -5,10 +5,17 @@ metadata:
 spec:
   hosts:
   - ci.lsst.codes
+  - eups.lsst.codes
+  - docker.io
+  - www.docker.com
   ports:
   - number: 443
     name: tls
     protocol: TLS
+  - number: 55555
+    name: hudson
+    protocol: TCP
+  location: MESH_EXTERNAL
   resolution: DNS
 ---
 
@@ -25,9 +32,15 @@ spec:
       name: tls
       protocol: TLS
     hosts:
-    - ci.lsst.codes
+    - '*'
     tls:
       mode: PASSTHROUGH
+  - port:
+      number: 55555
+      name: tcp
+      protocol: TCP
+    hosts:
+    - ci.lsst.codes
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -40,12 +53,25 @@ spec:
   #- name: ci.lsst.codes
 ---
 apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: rubin-jenkins-workers-hudson
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  subsets:
+  - name: rubin-jenkins-workers-hudson
+  #- name: ci.lsst.codes
+---
+apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: direct-rubin-jenkins-workers-through-egress-gateway
 spec:
   hosts:
-  - ci.lsst.codes
+  - '*'
+#  - ci.lsst.codes
+#  - docker.io
+#  - www.docker.com
   gateways:
   - mesh
   - istio-egressgateway
@@ -55,25 +81,68 @@ spec:
       - mesh
       port: 443
       sniHosts:
-      - ci.lsst.codes
+      - '*'
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
-        #subset: ci.lsst.codes
         subset: rubin-jenkins-workers
         port:
           number: 443
   - match:
     - gateways:
       - istio-egressgateway
-      port: 443
       sniHosts:
       - ci.lsst.codes
     route:
     - destination:
         host: ci.lsst.codes
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - eups.lsst.codes
+    route:
+    - destination:
+        host: eups.lsst.codes
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - docker.io
+    route:
+    - destination:
+        host: docker.io
+  - match:
+    - gateways:
+      - istio-egressgateway
+      sniHosts:
+      - www.docker.com
+    route:
+    - destination:
+        host: www.docker.com
+
+  tcp:
+  - match:
+    - destinationSubnets:
+      - 52.202.46.22/32
+      gateways:
+      - mesh
+      port: 55555
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        subset: rubin-jenkins-workers-hudson
         port:
-          number: 443
+          number: 55555
+  - match:
+    - gateways:
+      - istio-egressgateway
+      port: 55555
+    route:
+    - destination:
+        host: ci.lsst.codes
+        port:
+          number: 55555
       weight: 100
 
 
