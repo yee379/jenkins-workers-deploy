@@ -50,7 +50,6 @@ spec:
   host: istio-egressgateway.istio-system.svc.cluster.local
   subsets:
   - name: rubin-jenkins-workers
-  #- name: ci.lsst.codes
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -60,7 +59,6 @@ spec:
   host: istio-egressgateway.istio-system.svc.cluster.local
   subsets:
   - name: rubin-jenkins-workers-hudson
-  #- name: ci.lsst.codes
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -69,9 +67,6 @@ metadata:
 spec:
   hosts:
   - '*'
-#  - ci.lsst.codes
-#  - docker.io
-#  - www.docker.com
   gateways:
   - mesh
   - istio-egressgateway
@@ -144,6 +139,5 @@ spec:
         port:
           number: 55555
       weight: 100
-
 
 
